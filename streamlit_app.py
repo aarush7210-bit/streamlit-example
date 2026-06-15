@@ -12,173 +12,29 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 * {font-family: 'Poppins', sans-serif;}
-
-/* DARK GRADIENT BACKGROUND */
-.stApp {
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-    color: #fff;
-    animation: gradientShift 15s ease infinite;
-    background-size: 200% 200%;
-}
-@keyframes gradientShift {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
-}
-
-/* GLOWING HEADER */
-.main-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    padding: 2rem;
-    border-radius: 24px;
-    margin-bottom: 1.5rem;
-    text-align: center;
-    box-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 20px 60px rgba(0,0,0,0.4);
-    animation: float 3s ease-in-out infinite;
-    border: 2px solid rgba(255,255,255,0.1);
-}
-@keyframes float {
-    0%, 100% {transform: translateY(0px);}
-    50% {transform: translateY(-10px);}
-}
-.main-header h1 {
-    color: white;
-    font-size: 2.8rem;
-    font-weight: 800;
-    margin: 0;
-    text-shadow: 0 0 20px rgba(255,255,255,0.5);
-    letter-spacing: -1px;
-}
-.main-header p {
-    color: rgba(255,255,255,0.95);
-    font-size: 1.1rem;
-    margin-top: 0.5rem;
-    font-weight: 500;
-}
-
-/* NEON BADGES */
-.feature-badge {
-    display: inline-block;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    color: #fff;
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    margin: 0.3rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border: 1px solid rgba(255,255,255,0.2);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s;
-}
-.feature-badge:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
-}
-
-/* GLASS CHAT BUBBLES */
-.stChatMessage {
-    background: rgba(255,255,255,0.08)!important;
-    backdrop-filter: blur(20px)!important;
-    border: 1px solid rgba(255,255,255,0.15)!important;
-    border-radius: 20px!important;
-    padding: 1.2rem!important;
-    margin: 0.8rem 0!important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3)!important;
-    animation: slideIn 0.4s ease;
-}
-@keyframes slideIn {
-    from {opacity: 0; transform: translateX(-20px);}
-    to {opacity: 1; transform: translateX(0);}
-}
+.stApp {background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); color: #fff; animation: gradientShift 15s ease infinite; background-size: 200% 200%;}
+@keyframes gradientShift {0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;}}
+.main-header {background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); padding: 2rem; border-radius: 24px; margin-bottom: 1.5rem; text-align: center; box-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 20px 60px rgba(0,0,0,0.4); animation: float 3s ease-in-out infinite; border: 2px solid rgba(255,255,255,0.1);}
+@keyframes float {0%, 100% {transform: translateY(0px);} 50% {transform: translateY(-10px);}}
+.main-header h1 {color: white; font-size: 2.8rem; font-weight: 800; margin: 0; text-shadow: 0 0 20px rgba(255,255,255,0.5); letter-spacing: -1px;}
+.main-header p {color: rgba(255,255,255,0.95); font-size: 1.1rem; margin-top: 0.5rem; font-weight: 500;}
+.feature-badge {display: inline-block; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); color: #fff; padding: 0.5rem 1rem; border-radius: 50px; margin: 0.3rem; font-size: 0.9rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s;}
+.feature-badge:hover {transform: scale(1.1); box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);}
+.stChatMessage {background: rgba(255,255,255,0.08)!important; backdrop-filter: blur(20px)!important; border: 1px solid rgba(255,255,255,0.15)!important; border-radius: 20px!important; padding: 1.2rem!important; margin: 0.8rem 0!important; box-shadow: 0 8px 32px rgba(0,0,0,0.3)!important; animation: slideIn 0.4s ease;}
+@keyframes slideIn {from {opacity: 0; transform: translateX(-20px);} to {opacity: 1; transform: translateX(0);}}
 [data-testid="stChatMessageContent"] {color: #fff!important; font-size: 1.05rem!important;}
-
-/* MODERN INPUT BAR */
-.stChatInputContainer {
-    background: rgba(255,255,255,0.1)!important;
-    backdrop-filter: blur(20px)!important;
-    border: 2px solid rgba(102, 126, 234, 0.5)!important;
-    border-radius: 50px!important;
-    padding: 0.5rem 1rem!important;
-    box-shadow: 0 0 30px rgba(102, 126, 234, 0.3)!important;
-}
-input[type="text"] {
-    background: transparent!important;
-    border: none!important;
-    color: #fff!important;
-    font-size: 1.05rem!important;
-}
-
-/* NEON BUTTONS */
-.stButton button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)!important;
-    color: white!important;
-    border: none!important;
-    border-radius: 50px!important;
-    padding: 0.7rem 1.8rem!important;
-    font-weight: 700!important;
-    font-size: 1rem!important;
-    transition: all 0.3s!important;
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.6)!important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.stButton button:hover {
-    transform: translateY(-3px) scale(1.05)!important;
-    box-shadow: 0 0 30px rgba(102, 126, 234, 1), 0 10px 40px rgba(0,0,0,0.4)!important;
-}
-
-/* ATTACH BUTTON - PULSE EFFECT */
-.attach-btn button {
-    width: 50px!important;
-    height: 50px!important;
-    border-radius: 50%!important;
-    font-size: 1.5rem!important;
-    animation: pulse 2s infinite;
-}
-@keyframes pulse {
-    0%, 100% {box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);}
-    50% {box-shadow: 0 0 0 15px rgba(102, 126, 234, 0);}
-}
-
-/* UPLOAD TABS - GLASS */
-.stTabs [data-baseweb="tab-list"] {
-    background: rgba(255,255,255,0.05);
-    border-radius: 16px;
-    padding: 0.5rem;
-    gap: 0.5rem;
-}
-.stTabs [data-baseweb="tab"] {
-    background: rgba(255,255,255,0.1);
-    border-radius: 12px;
-    color: #fff;
-    font-weight: 600;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)!important;
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
-}
-
-/* STATS CARDS */
-.stat-card {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 16px;
-    padding: 1rem;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    transition: all 0.3s;
-}
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 30px rgba(102, 126, 234, 0.6);
-}
-
-/* HIDE STREAMLIT */
-#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
-.stDeployButton {display: none;}
+.stChatInputContainer {background: rgba(255,255,255,0.1)!important; backdrop-filter: blur(20px)!important; border: 2px solid rgba(102, 126, 234, 0.5)!important; border-radius: 50px!important; padding: 0.5rem 1rem!important; box-shadow: 0 0 30px rgba(102, 126, 234, 0.3)!important;}
+input[type="text"], input[type="password"] {background: rgba(255,255,255,0.1)!important; border: 1px solid rgba(255,255,255,0.2)!important; color: #fff!important; border-radius: 12px!important;}
+.stButton button {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)!important; color: white!important; border: none!important; border-radius: 50px!important; padding: 0.7rem 1.8rem!important; font-weight: 700!important; font-size: 1rem!important; transition: all 0.3s!important; box-shadow: 0 0 20px rgba(102, 126, 234, 0.6)!important; text-transform: uppercase; letter-spacing: 1px;}
+.stButton button:hover {transform: translateY(-3px) scale(1.05)!important; box-shadow: 0 0 30px rgba(102, 126, 234, 1), 0 10px 40px rgba(0,0,0,0.4)!important;}
+.attach-btn button {width: 50px!important; height: 50px!important; border-radius: 50%!important; font-size: 1.5rem!important; animation: pulse 2s infinite;}
+@keyframes pulse {0%, 100% {box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);} 50% {box-shadow: 0 0 0 15px rgba(102, 126, 234, 0);} }
+.stTabs [data-baseweb="tab-list"] {background: rgba(255,255,255,0.05); border-radius: 16px; padding: 0.5rem; gap: 0.5rem;}
+.stTabs [data-baseweb="tab"] {background: rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-weight: 600; border: 1px solid rgba(255,255,255,0.1);}
+.stTabs [aria-selected="true"] {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)!important; box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);}
+.stat-card {background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 1rem; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); transition: all 0.3s;}
+.stat-card:hover {transform: translateY(-5px); box-shadow: 0 0 30px rgba(102, 126, 234, 0.6);}
+#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;} .stDeployButton {display: none;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -190,26 +46,41 @@ model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=
 
 OWNER_EMAILS = ["aarush@gmail.com"]
 SCHOOL_DOMAINS = ["@schillergzb.edu"]
+# SECURITY FIX: School ka secret code - Sirf Principal ko dena
+SCHILLER_CODE = "SCHILLER2026"
 
 if "user_email" not in st.session_state:
     st.session_state.user_email = ""
+if "school_verified" not in st.session_state:
+    st.session_state.school_verified = False
 
-with st.expander("🎓 Schiller Student? Free Unlimited Access 👇 (Optional)"):
-    email_input = st.text_input("Email", value=st.session_state.user_email, placeholder="name@schillergzb.edu", label_visibility="collapsed")
+# SECURITY FIX: EMAIL + PASSCODE SYSTEM
+with st.expander("🎓 Schiller Student? Admin Code Required 👇"):
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✨ Activate Pro", use_container_width=True):
-            st.session_state.user_email = email_input
-            st.rerun()
+        email_input = st.text_input("School Email", placeholder="name@schillergzb.edu", key="email_input")
     with col2:
-        if st.button("⏭️ Skip For Now", use_container_width=True):
-            st.session_state.user_email = ""
+        passcode = st.text_input("Schiller Passcode", type="password", placeholder="Ask your teacher", key="code_input")
+    
+    if st.button("✨ Unlock Pro Access", use_container_width=True):
+        if email_input in OWNER_EMAILS:
+            st.session_state.user_email = email_input
+            st.session_state.school_verified = True
+            st.success("👑 Owner Access Activated!")
             st.rerun()
+        elif any(d in email_input for d in SCHOOL_DOMAINS) and passcode == SCHILLER_CODE:
+            st.session_state.user_email = email_input
+            st.session_state.school_verified = True
+            st.success("✅ Schiller Pro Activated! Unlimited access")
+            st.rerun()
+        else:
+            st.error("❌ Wrong passcode or email! Contact school admin")
+            st.session_state.school_verified = False
 
-email = st.session_state.user_email
+email = st.session_state.user_email if st.session_state.school_verified else ""
 
 if email and email in OWNER_EMAILS: user_tier, daily_limit = "owner", 999999
-elif email and any(d in email for d in SCHOOL_DOMAINS): user_tier, daily_limit = "school", 999999
+elif email and any(d in email for d in SCHOOL_DOMAINS) and st.session_state.school_verified: user_tier, daily_limit = "school", 999999
 else: user_tier, daily_limit = "free", 5
 
 if "question_count" not in st.session_state: st.session_state.question_count = 0
@@ -281,7 +152,7 @@ if st.session_state.show_attach:
 
 def process_request(input_type, content, display_content):
     if st.session_state.question_count >= daily_limit:
-        st.error("🚫 Daily limit khatam! Schiller students ke liye unlimited hai 🎓")
+        st.error("🚫 Daily limit khatam! Schiller students ke liye Admin Code se unlimited hai 🎓")
         return
     
     with st.chat_message("user"):
@@ -334,4 +205,4 @@ elif prompt:
     process_request("text", prompt, prompt)
 
 st.divider()
-st.markdown("<center style='color: #8696a0;'>ScopeAI Pro v8.0 GenZ 🔥 | Made with ❤️ for Students | Powered by Gemini 2.5 Flash</center>", unsafe_allow_html=True)
+st.markdown("<center style='color: #8696a0;'>ScopeAI Pro v8.1 Secure 🔐 | Made with ❤️ for Students | Powered by Gemini 2.5 Flash</center>", unsafe_allow_html=True)
