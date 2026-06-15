@@ -3,6 +3,7 @@ import google.generativeai as genai
 import PIL.Image
 import PyPDF2
 import io
+import os # YE LINE ADD KI HAI
 from datetime import datetime
 
 st.set_page_config(page_title="ScopeAI Pro", page_icon="🎤", layout="wide", initial_sidebar_state="collapsed")
@@ -32,7 +33,8 @@ hr {border-color: #2a2a2a!important; margin: 2rem 0!important;}
 </style>
 """, unsafe_allow_html=True)
 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# YAHAN FIX KIYA HAI - st.secrets ki jagah os.environ
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 SYSTEM_PROMPT = """You are ScopeAI Pro, NCERT AI Tutor for Class 6-12 CBSE. CRITICAL RULES: 1. NEVER REPEAT sentences 2. ALWAYS end maths with Final Answer: 3. For √(3x²-4x+34) + √(3x²-4x-11) = 9, use a=3x²-4x to get √a+34 + √a-11 = 9 4. Follow CBSE marking scheme. 5. For voice inputs, transcribe and solve. FORMAT: **Given:** **Formula:** **Solution:** Step 1: Step 2: **Final Answer:** TONE: Professional Hinglish. For PDFs extract questions and solve each. If image/audio unclear ask Saaf bhejo ONCE only."""
 
@@ -85,7 +87,6 @@ if "messages" not in st.session_state:
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]): st.write(msg["content"])
 
-# UPLOAD SECTION - VOICE + CAMERA + PDF + IMAGE
 st.markdown('<div class="upload-section">', unsafe_allow_html=True)
 st.markdown("**📱 Choose Input Method:**")
 col1, col2, col3, col4 = st.columns(4)
@@ -103,7 +104,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 prompt = st.chat_input("Ya yahan type karo...")
 
-# PROCESS VOICE INPUT
 if audio_input:
     if st.session_state.question_count >= daily_limit:
         st.error("Daily limit reached! Schiller students unlimited hain.")
@@ -125,7 +125,6 @@ if audio_input:
         with st.chat_message("assistant"): st.write(answer)
         st.rerun()
 
-# PROCESS CAMERA
 if camera_photo:
     if st.session_state.question_count >= daily_limit:
         st.error("Daily limit reached!")
@@ -143,7 +142,6 @@ if camera_photo:
         with st.chat_message("assistant"): st.write(answer)
         st.rerun()
 
-# PROCESS IMAGE
 if uploaded_image:
     if st.session_state.question_count >= daily_limit:
         st.error("Daily limit reached!")
@@ -161,7 +159,6 @@ if uploaded_image:
         with st.chat_message("assistant"): st.write(answer)
         st.rerun()
 
-# PROCESS PDF
 if uploaded_pdf:
     if st.session_state.question_count >= daily_limit:
         st.error("Daily limit reached!")
@@ -181,7 +178,6 @@ if uploaded_pdf:
         with st.chat_message("assistant"): st.write(answer)
         st.rerun()
 
-# PROCESS TEXT
 if prompt:
     if st.session_state.question_count >= daily_limit:
         st.error("Daily limit reached!")
