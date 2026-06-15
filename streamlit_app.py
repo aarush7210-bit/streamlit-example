@@ -12,14 +12,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# Gemini Setup - FIXED FOR RENDER
+# Gemini Setup - FIXED FOR RENDER + NEW MODEL
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     st.error("😅 GEMINI_API_KEY nahi mili. Render > Environment mein add karo")
     st.stop()
     
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-8b')  # NAYA - 4x FAST + ZYADA QUOTA
 
 # Session state
 if "messages" not in st.session_state:
@@ -149,6 +149,9 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 📊 Stats")
     st.info(f"💬 Total Messages: {len(st.session_state.messages)}")
+    
+    st.markdown("---")
+    st.caption("⚠️ Free API: 15 msg/min limit")
 
 # Display chat history
 for message in st.session_state.messages:
@@ -201,7 +204,7 @@ if uploaded_file is not None:
                 ])
             elif "pdf" in file_type:
                 pdf_reader = PyPDF2.PdfReader(uploaded_file)
-                pdf_text = "".join([page.extract_text() for page in pdf_reader.pages[:5]])  # First 5 pages only
+                pdf_text = "".join([page.extract_text() for page in pdf_reader.pages[:5]])
                 prompt = f"You are ScopeAI. Summarize this PDF for JEE/NEET student in Hindi-English mix. Make key points:\n\n{pdf_text[:4000]}"
                 response = model.generate_content(prompt)
             
@@ -212,13 +215,17 @@ if uploaded_file is not None:
                 time.sleep(0.02)
                 message_placeholder.markdown(displayed_text + "▌")
             message_placeholder.markdown(full_response)
+            time.sleep(1)  # NAYA - RATE LIMIT FIX
             st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
-            error_msg = f"😅 Error: {str(e)}. PDF ya image clear hai na?"
+            # NAYA - BETTER ERROR HANDLING
+            if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
+                error_msg = "😅 Bhai Gemini thak gaya! Free API ki limit 15 msg/min hai. 1 min ruk ja ya page refresh kar de 😂"
+            else:
+                error_msg = f"😅 Error: {str(e)[:100]}. Net check kar ya image clear bhej"
             message_placeholder.markdown(error_msg)
             st.session_state.messages.append({"role": "assistant", "content": error_msg})
     
-    # Clear file uploader after processing
     st.session_state.file_uploader = None
     st.rerun()
 
@@ -250,8 +257,13 @@ if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
                 time.sleep(0.02)
                 message_placeholder.markdown(displayed_text + "▌")
             message_placeholder.markdown(full_response)
+            time.sleep(1)  # NAYA - RATE LIMIT FIX
         except Exception as e:
-            full_response = "😅 Bhai thoda error aa gaya. API limit ho sakti hai. 1 min baad fir se try karo."
+            # NAYA - BETTER ERROR HANDLING
+            if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
+                full_response = "😅 Bhai 1 min ruk ja! Free API ki limit 15 msg/min hai. Tu to ChatGPT se bhi tez chal raha hai 🔥"
+            else:
+                full_response = f"😅 Thoda error aa gaya: {str(e)[:80]}. Dobara try kar"
             message_placeholder.markdown(full_response)
     
     st.session_state.messages.append({"role": "assistant", "content": full_response})
