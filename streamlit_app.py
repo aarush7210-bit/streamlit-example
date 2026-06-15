@@ -3,10 +3,11 @@ import google.generativeai as genai
 from supabase import create_client, Client
 import os
 import re
-from datetime import datetime
+from datetime import datetime, date
 from PIL import Image
 import PyPDF2
 import io
+import random
 
 # --------------------- PAGE CONFIG ---------------------
 st.set_page_config(
@@ -19,7 +20,6 @@ st.set_page_config(
 # --------------------- CUSTOM CSS - OPTIMIZED NEON ---------------------
 st.markdown("""
 <style>
-    /* Main App - Optimized Gradient */
     .main {
         background: #0a0a1a;
         background-image: 
@@ -28,13 +28,10 @@ st.markdown("""
             radial-gradient(at 40% 80%, #1e3a5f 0px, transparent 50%);
         color: white;
     }
-    
-    /* Hide Streamlit Stuff */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Custom Brand Logo - SVG Star */
     @keyframes star-pulse {
         0%, 100% { 
             filter: drop-shadow(0 0 8px #4facfe) drop-shadow(0 0 15px #00f2fe);
@@ -45,7 +42,6 @@ st.markdown("""
             transform: scale(1.05) rotate(5deg);
         }
     }
-    
     .brand-logo {
         width: 80px;
         height: 80px;
@@ -53,8 +49,6 @@ st.markdown("""
         animation: star-pulse 2.5s ease-in-out infinite;
         display: block;
     }
-    
-    /* Chat Messages - Optimized Glass */
     .stChatMessage {
         background: rgba(20, 20, 40, 0.7) !important;
         backdrop-filter: blur(12px) !important;
@@ -64,8 +58,6 @@ st.markdown("""
         margin: 0.6rem 0 !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
     }
-    
-    /* Buttons - Subtle Neon */
     .stButton>button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
@@ -77,28 +69,16 @@ st.markdown("""
         transition: all 0.2s ease !important;
         box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3) !important;
     }
-    
     .stButton>button:hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5) !important;
-        border: 1px solid rgba(102, 126, 234, 0.8) !important;
     }
-    
-    /* Text Input - Clean Neon */
-    .stTextInput>div>div>input, .stTextArea>div>div>textarea {
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>div {
         background: rgba(15, 15, 35, 0.8) !important;
         color: white !important;
         border: 1px solid rgba(79, 172, 254, 0.4) !important;
         border-radius: 10px !important;
-        padding: 0.7rem !important;
     }
-    
-    .stTextInput>div>div>input:focus {
-        border: 1px solid #4facfe !important;
-        box-shadow: 0 0 12px rgba(79, 172, 254, 0.4) !important;
-    }
-    
-    /* Headers */
     h1 {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
         -webkit-background-clip: text;
@@ -108,12 +88,6 @@ st.markdown("""
         font-weight: 800 !important;
         margin-bottom: 0.3rem !important;
     }
-    
-    h2, h3 {
-        color: #8b9dc3 !important;
-    }
-    
-    /* Login Box - Subtle Glow */
     .login-container {
         background: rgba(15, 15, 35, 0.6);
         backdrop-filter: blur(15px);
@@ -122,40 +96,26 @@ st.markdown("""
         border: 1px solid rgba(102, 126, 234, 0.3);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
-    
-    /* Sidebar */
     .css-1d391kg {
         background: rgba(10, 10, 26, 0.9) !important;
         border-right: 1px solid rgba(102, 126, 234, 0.2) !important;
     }
-    
-    /* Chat Input */
     .stChatInputContainer {
         background: rgba(15, 15, 35, 0.9) !important;
         border: 1px solid rgba(79, 172, 254, 0.4) !important;
         border-radius: 15px !important;
     }
-    
     .subtitle {
         text-align: center;
         color: #8b9dc3;
         font-size: 1rem;
         margin-bottom: 1.5rem;
     }
-    
-    /* Feature Cards */
-    .feature-card {
+    .stMetric {
         background: rgba(20, 20, 40, 0.5);
-        border: 1px solid rgba(102, 126, 234, 0.2);
+        border: 1px solid rgba(102, 126, 234, 0.3);
         border-radius: 12px;
         padding: 1rem;
-        margin: 0.5rem 0;
-        transition: all 0.2s;
-    }
-    
-    .feature-card:hover {
-        border: 1px solid rgba(102, 126, 234, 0.5);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -194,6 +154,12 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "user_email" not in st.session_state:
     st.session_state.user_email = ""
+if "streak" not in st.session_state:
+    st.session_state.streak = 1
+if "last_login" not in st.session_state:
+    st.session_state.last_login = str(date.today())
+if "mock_test_active" not in st.session_state:
+    st.session_state.mock_test_active = False
 
 # --------------------- HELPER FUNCTIONS ---------------------
 def is_valid_email(email):
@@ -210,14 +176,20 @@ def extract_pdf_text(pdf_file):
     except:
         return None
 
-# --------------------- LOGIN PAGE - NO ACCESS CODE ---------------------
+def update_streak():
+    today = str(date.today())
+    if st.session_state.last_login != today:
+        st.session_state.streak += 1
+        st.session_state.last_login = today
+
+# --------------------- LOGIN PAGE ---------------------
 def login_page():
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         st.markdown(BRAND_LOGO_SVG, unsafe_allow_html=True)
         st.markdown("<h1>ScopeAI</h1>", unsafe_allow_html=True)
-        st.markdown('<p class="subtitle">Next-Gen AI Tutor for Everyone</p>', unsafe_allow_html=True)
+        st.markdown('<p class="subtitle">Next-Gen AI Tutor for JEE/NEET</p>', unsafe_allow_html=True)
         
         email = st.text_input("Your Email", placeholder="you@gmail.com", label_visibility="collapsed")
         
@@ -227,40 +199,63 @@ def login_page():
             else:
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
+                update_streak()
                 st.balloons()
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-# --------------------- CHAT PAGE - ALL FEATURES ---------------------
+# --------------------- CHAT PAGE ---------------------
 def chat_page():
-    # Header
     st.markdown(BRAND_LOGO_SVG, unsafe_allow_html=True)
     st.markdown("<h1>ScopeAI</h1>", unsafe_allow_html=True)
     st.markdown(f'<p class="subtitle">Welcome {st.session_state.user_email}</p>', unsafe_allow_html=True)
     
-    # Sidebar - All Features
     with st.sidebar:
+        st.metric("🔥 Your Streak", f"{st.session_state.streak} Days")
+        st.markdown("---")
+        
         st.markdown("### 🎯 AI Features")
         
-        # Feature 1: Complicated Question Solving
-        if st.button("🧠 Solve Complex Problems"):
-            st.session_state.messages.append({"role": "user", "content": "I have a complicated JEE/NEET question. Help me solve step by step with detailed explanation."})
-            st.rerun()
+        # Feature 1: Formula Sheet
+        if st.button("📋 Formula Sheet"):
+            topic = st.text_input("Topic name:", key="formula_topic")
+            if topic:
+                with st.spinner("Creating formula sheet..."):
+                    prompt = f"Create a complete formula sheet for {topic} for JEE/NEET. Use table format. Include all important formulas with units. Make it exam ready."
+                    response = model.generate_content(prompt)
+                    st.session_state.messages.append({"role": "user", "content": f"Formula sheet for {topic}"})
+                    st.session_state.messages.append({"role": "assistant", "content": response.text})
+                    st.rerun()
         
-        # Feature 2: Study Notes
-        if st.button("📚 Generate Notes"):
-            st.session_state.messages.append({"role": "user", "content": "Create detailed study notes for me"})
-            st.rerun()
+        # Feature 2: Mock Test Generator
+        if st.button("📝 Mock Test"):
+            st.session_state.mock_test_active = True
+            subject = st.selectbox("Subject:", ["Physics", "Chemistry", "Maths", "Biology"], key="mock_subject")
+            num_q = st.slider("Questions:", 5, 20, 10, key="mock_num")
+            if st.button("Start Test", key="start_mock"):
+                with st.spinner("Creating mock test..."):
+                    prompt = f"Create {num_q} MCQs for {subject} JEE/NEET level. Give questions only, no answers. Number them 1 to {num_q}."
+                    response = model.generate_content(prompt)
+                    st.session_state.messages.append({"role": "user", "content": f"Mock Test: {subject}"})
+                    st.session_state.messages.append({"role": "assistant", "content": response.text + "\n\n**Submit your answers like: 1-A, 2-B, 3-C... I'll check them!**"})
+                    st.rerun()
         
-        # Feature 3: Doubt Solver
-        if st.button("❓ Instant Doubt Solve"):
-            st.session_state.messages.append({"role": "user", "content": "I have a doubt. Explain it like I'm 15"})
-            st.rerun()
-            
+        # Feature 3: PYQ Solver
+        if st.button("📚 PYQ Solver"):
+            year = st.selectbox("Year:", [2024, 2023, 2022, 2021, 2020], key="pyq_year")
+            subject = st.selectbox("Subject:", ["Physics", "Chemistry", "Maths"], key="pyq_subject")
+            topic = st.text_input("Topic (optional):", key="pyq_topic")
+            if st.button("Get PYQs", key="get_pyq"):
+                with st.spinner("Fetching PYQs..."):
+                    prompt = f"Give 5 most important JEE {year} {subject} questions from topic: {topic}. Solve each step by step with detailed explanation."
+                    response = model.generate_content(prompt)
+                    st.session_state.messages.append({"role": "user", "content": f"PYQ {year} {subject} {topic}"})
+                    st.session_state.messages.append({"role": "assistant", "content": response.text})
+                    st.rerun()
+        
         st.markdown("---")
         st.markdown("### 📎 Upload Files")
         
-        # Feature 4: Photo Upload
         uploaded_image = st.file_uploader("📷 Photo", type=['png', 'jpg', 'jpeg'], key="photo")
         if uploaded_image:
             image = Image.open(uploaded_image)
@@ -272,23 +267,16 @@ def chat_page():
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
                     st.rerun()
         
-        # Feature 5: PDF Upload
         uploaded_pdf = st.file_uploader("📄 PDF", type=['pdf'], key="pdf")
         if uploaded_pdf:
             if st.button("Summarize PDF"):
                 with st.spinner("Reading PDF..."):
                     pdf_text = extract_pdf_text(uploaded_pdf)
                     if pdf_text:
-                        response = model.generate_content(f"Summarize this PDF and create key points:\n\n{pdf_text[:10000]}")
+                        response = model.generate_content(f"Summarize this PDF and create key points for JEE/NEET:\n\n{pdf_text[:10000]}")
                         st.session_state.messages.append({"role": "user", "content": "[PDF uploaded]"})
                         st.session_state.messages.append({"role": "assistant", "content": response.text})
                         st.rerun()
-                    else:
-                        st.error("PDF read nahi hui")
-        
-        st.markdown("---")
-        st.markdown("### 🎤 Voice Input")
-        st.info("Voice feature: Click mic button in chat box below")
         
         st.markdown("---")
         if st.button("🚪 Logout"):
@@ -297,12 +285,10 @@ def chat_page():
             st.session_state.user_email = ""
             st.rerun()
     
-    # Display chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    # Chat input - Voice supported by Streamlit natively
     if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -311,7 +297,6 @@ def chat_page():
         with st.chat_message("assistant"):
             with st.spinner("Solving... 🧠"):
                 try:
-                    # Enhanced prompt for complicated questions
                     enhanced_prompt = f"""You are ScopeAI, expert tutor for JEE/NEET. 
                     User question: {prompt}
                     
