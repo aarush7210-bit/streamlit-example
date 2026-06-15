@@ -2,63 +2,51 @@ import streamlit as st
 import os
 from groq import Groq
 
-st.set_page_config(page_title="ScopeAI Pro - NCERT Tutor", page_icon="📚", layout="wide")
+st.set_page_config(page_title="NCERT Doubt Solver", page_icon="📚")
 
-st.markdown("""
-<style>
-.stApp { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-  h1, h3 { color: white; text-align: center; }
-.stChatMessage { background: rgba(255,255,255,0.95); border-radius: 15px; padding: 10px; }
-</style>
-""", unsafe_allow_html=True)
+# Groq Client
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-st.markdown("# 📚 ScopeAI Pro - NCERT Tutor")
-st.markdown("### *Class 1-12 ke liye AI Tutor | Hindi, English, Hinglish*")
+st.title("📚 NCERT Doubt Solver AI")
+st.caption("Class 6-12 | Physics, Chemistry, Maths, Bio | Hindi + English")
 
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
-
+# Sidebar for options
 with st.sidebar:
-    st.markdown("### ⚙️ Settings")
-    language = st.selectbox("Bhasha chuno:", ["Hinglish", "Hindi", "English"])
-    class_level = st.selectbox("Class:", [f"Class {i}" for i in range(1,13)])
-    subject = st.selectbox("Subject:", ["Science", "Maths", "SST", "English", "Hindi"])
+    st.header("⚙️ Settings")
+    subject = st.selectbox("Subject", ["Science", "Physics", "Chemistry", "Maths", "Biology", "Social Science"])
+    class_name = st.selectbox("Class", ["6", "7", "8", "9", "10", "11", "12"])
+    language = st.radio("Answer Language", ["Hinglish", "Hindi", "English"])
     
-    if st.button("🗑️ Chat Clear Karo"):
-        st.session_state.messages = []
-        st.rerun()
+st.divider()
 
+# Main chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Show history
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+    st.chat_message(msg["role"]).write(msg["content"])
 
-lang_prompts = {
-    "Hindi": "Hamesha shuddh Hindi mein jawab do. Saral shabdon ka prayog karo.",
-    "English": "Always answer in clear English. Explain like to a school student.",
-    "Hinglish": "Hinglish mein jawab do. Technical words English mein, explanation Hindi mein."
-}
-
-if prompt := st.chat_input("NCERT se koi bhi sawaal pucho..."):
+# User input
+if prompt := st.chat_input("NCERT ka sawaal yahan likho..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
+    st.chat_message("user").write(prompt)
+    
+    # NCERT Expert System Prompt
+    system_prompt = f"""You are an NCERT expert for Class {class_name} {subject}. 
+    Answer ONLY from NCERT textbook. Use {language}. 
+    Explain step-by-step like a friendly teacher. 
+    Give examples from daily life. If not in NCERT, say 'Ye NCERT mein nahi hai'."""
+    
     with st.chat_message("assistant"):
-        with st.spinner("Soch raha hu..."):
-            system_prompt = f"""You are ScopeAI Pro, NCERT expert for {class_level} {subject}.
-            {lang_prompts[language]}
-            NCERT syllabus ke hisaab se hi jawab do. Examples do. Step-by-step samjhao."""
-            
+        with st.spinner("Socho raha hu..."):
             response = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-                temperature=0.7, max_tokens=1000
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ]
             )
-            reply = response.choices[0].message.content
-            st.markdown(reply)
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-
-st.markdown("---")
-st.markdown("Made with ❤️ for Students | Powered by Groq + Llama 3.1")
+            answer = response.choices[0].message.content
+            st.write(answer)
+            st.session_state.messages.append({"role": "assistant", "content": answer})
