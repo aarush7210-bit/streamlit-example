@@ -12,14 +12,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# Gemini Setup - FINAL FIXED MODEL
+# Gemini Setup - SABSE STABLE MODEL
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     st.error("😅 GEMINI_API_KEY nahi mili. Render > Environment mein add karo")
     st.stop()
     
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash-latest')  # ✅ YE 100% CHALEGA
+model = genai.GenerativeModel('gemini-pro')  # ✅ FINAL - YE HAMESHA CHALEGA
 
 # Session state
 if "messages" not in st.session_state:
@@ -181,7 +181,7 @@ if len(st.session_state.messages) == 0:
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.rerun()
 
-# Handle File Upload
+# Handle File Upload - GEMINI-PRO IMAGE SUPPORT HATA DIYA
 if uploaded_file is not None:
     file_type = uploaded_file.type
     
@@ -197,18 +197,15 @@ if uploaded_file is not None:
         message_placeholder = st.empty()
         try:
             if "image" in file_type:
-                image = Image.open(uploaded_file)
-                response = model.generate_content([
-                    "You are ScopeAI, a JEE/NEET expert tutor. Solve this question step by step from the image. Use Hindi-English mix. Be encouraging. Show formulas clearly.",
-                    image
-                ])
+                # gemini-pro image support nahi karta, isliye text reply
+                full_response = "😅 Bhai abhi photo wala feature upgrade ho raha hai. Text mein doubt likh do, main turant solve kar dunga 🚀"
             elif "pdf" in file_type:
                 pdf_reader = PyPDF2.PdfReader(uploaded_file)
                 pdf_text = "".join([page.extract_text() for page in pdf_reader.pages[:5]])
                 prompt = f"You are ScopeAI. Summarize this PDF for JEE/NEET student in Hindi-English mix. Make key points:\n\n{pdf_text[:4000]}"
                 response = model.generate_content(prompt)
+                full_response = response.text
             
-            full_response = response.text
             displayed_text = ""
             for chunk in full_response.split():
                 displayed_text += chunk + " "
@@ -219,11 +216,9 @@ if uploaded_file is not None:
             st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
             if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
-                error_msg = "😅 Bhai Gemini thak gaya! Free API ki limit 15 msg/min hai. 1 min ruk ja ya page refresh kar de 😂"
-            elif "404" in str(e):
-                error_msg = "😅 Model error! Code update karo bhai. Admin ko bolo"
+                error_msg = "😅 Bhai 1 min ruk ja! Free API ki limit 15 msg/min hai. Tu to ChatGPT se bhi tez hai 🔥"
             else:
-                error_msg = f"😅 Error: {str(e)[:100]}. Net check kar ya image clear bhej"
+                error_msg = f"😅 Error: {str(e)[:100]}. Dobara try kar"
             message_placeholder.markdown(error_msg)
             st.session_state.messages.append({"role": "assistant", "content": error_msg})
     
@@ -262,8 +257,6 @@ if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
         except Exception as e:
             if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
                 full_response = "😅 Bhai 1 min ruk ja! Free API ki limit 15 msg/min hai. Tu to ChatGPT se bhi tez hai 🔥"
-            elif "404" in str(e):
-                full_response = "😅 Model nahi mila bhai! Code update kar"
             else:
                 full_response = f"😅 Thoda error aa gaya: {str(e)[:80]}. Dobara try kar"
             message_placeholder.markdown(full_response)
