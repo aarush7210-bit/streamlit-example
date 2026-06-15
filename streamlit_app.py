@@ -12,14 +12,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# Gemini Setup - FIXED FOR RENDER + NEW MODEL
+# Gemini Setup - FINAL FIXED MODEL
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     st.error("😅 GEMINI_API_KEY nahi mili. Render > Environment mein add karo")
     st.stop()
     
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash-8b')  # NAYA - 4x FAST + ZYADA QUOTA
+model = genai.GenerativeModel('gemini-1.5-flash-latest')  # ✅ YE 100% CHALEGA
 
 # Session state
 if "messages" not in st.session_state:
@@ -215,12 +215,13 @@ if uploaded_file is not None:
                 time.sleep(0.02)
                 message_placeholder.markdown(displayed_text + "▌")
             message_placeholder.markdown(full_response)
-            time.sleep(1)  # NAYA - RATE LIMIT FIX
+            time.sleep(1)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
-            # NAYA - BETTER ERROR HANDLING
             if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
                 error_msg = "😅 Bhai Gemini thak gaya! Free API ki limit 15 msg/min hai. 1 min ruk ja ya page refresh kar de 😂"
+            elif "404" in str(e):
+                error_msg = "😅 Model error! Code update karo bhai. Admin ko bolo"
             else:
                 error_msg = f"😅 Error: {str(e)[:100]}. Net check kar ya image clear bhej"
             message_placeholder.markdown(error_msg)
@@ -257,11 +258,12 @@ if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
                 time.sleep(0.02)
                 message_placeholder.markdown(displayed_text + "▌")
             message_placeholder.markdown(full_response)
-            time.sleep(1)  # NAYA - RATE LIMIT FIX
+            time.sleep(1)
         except Exception as e:
-            # NAYA - BETTER ERROR HANDLING
             if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
-                full_response = "😅 Bhai 1 min ruk ja! Free API ki limit 15 msg/min hai. Tu to ChatGPT se bhi tez chal raha hai 🔥"
+                full_response = "😅 Bhai 1 min ruk ja! Free API ki limit 15 msg/min hai. Tu to ChatGPT se bhi tez hai 🔥"
+            elif "404" in str(e):
+                full_response = "😅 Model nahi mila bhai! Code update kar"
             else:
                 full_response = f"😅 Thoda error aa gaya: {str(e)[:80]}. Dobara try kar"
             message_placeholder.markdown(full_response)
