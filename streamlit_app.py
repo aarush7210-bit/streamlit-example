@@ -6,18 +6,22 @@ import io
 import os
 from datetime import datetime
 
-st.set_page_config(page_title="ScopeAI Pro", page_icon="🚀", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="ScopeAI Pro", page_icon="🧠", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
 * {font-family: 'Poppins', sans-serif;}
 .stApp {background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); color: #fff; animation: gradientShift 15s ease infinite; background-size: 200% 200%;}
 @keyframes gradientShift {0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;}}
-.main-header {background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); padding: 2rem; border-radius: 24px; margin-bottom: 1.5rem; text-align: center; box-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 20px 60px rgba(0,0,0,0.4); animation: float 3s ease-in-out infinite; border: 2px solid rgba(255,255,255,0.1);}
+.main-header {background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); padding: 2.5rem 2rem; border-radius: 24px; margin-bottom: 1.5rem; text-align: center; box-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 20px 60px rgba(0,0,0,0.4); animation: float 3s ease-in-out infinite; border: 2px solid rgba(255,255,255,0.1); position: relative; overflow: hidden;}
+.main-header::before {content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: shimmer 3s infinite;}
+@keyframes shimmer {0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);}}
 @keyframes float {0%, 100% {transform: translateY(0px);} 50% {transform: translateY(-10px);}}
-.main-header h1 {color: white; font-size: 2.8rem; font-weight: 800; margin: 0; text-shadow: 0 0 20px rgba(255,255,255,0.5); letter-spacing: -1px;}
-.main-header p {color: rgba(255,255,255,0.95); font-size: 1.1rem; margin-top: 0.5rem; font-weight: 500;}
+@keyframes rotate {from {transform: rotate(0deg);} to {transform: rotate(360deg);}}
+@keyframes glow {0%, 100% {filter: drop-shadow(0 0 10px rgba(102,126,234,0.8));} 50% {filter: drop-shadow(0 0 20px rgba(240,147,251,1));}}
+.logo-text {margin: 0; font-size: 2.8rem; background: linear-gradient(135deg, #fff 0%, #f093fb 50%, #fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; letter-spacing: -2px; text-shadow: 0 0 30px rgba(255,255,255,0.5);}
+.pro-badge {margin: 0; font-size: 1rem; color: rgba(255,255,255,0.9); letter-spacing: 5px; font-weight: 700; text-transform: uppercase;}
 .feature-badge {display: inline-block; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); color: #fff; padding: 0.5rem 1rem; border-radius: 50px; margin: 0.3rem; font-size: 0.9rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s;}
 .feature-badge:hover {transform: scale(1.1); box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);}
 .stChatMessage {background: rgba(255,255,255,0.08)!important; backdrop-filter: blur(20px)!important; border: 1px solid rgba(255,255,255,0.15)!important; border-radius: 20px!important; padding: 1.2rem!important; margin: 0.8rem 0!important; box-shadow: 0 8px 32px rgba(0,0,0,0.3)!important; animation: slideIn 0.4s ease;}
@@ -46,7 +50,6 @@ model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=
 
 OWNER_EMAILS = ["aarush@gmail.com"]
 SCHOOL_DOMAINS = ["@schillergzb.edu"]
-# SECURITY FIX: School ka secret code - Sirf Principal ko dena
 SCHILLER_CODE = "SCHILLER2026"
 
 if "user_email" not in st.session_state:
@@ -54,7 +57,6 @@ if "user_email" not in st.session_state:
 if "school_verified" not in st.session_state:
     st.session_state.school_verified = False
 
-# SECURITY FIX: EMAIL + PASSCODE SYSTEM
 with st.expander("🎓 Schiller Student? Admin Code Required 👇"):
     col1, col2 = st.columns(2)
     with col1:
@@ -89,11 +91,37 @@ if st.session_state.date != datetime.now().date():
     st.session_state.question_count = 0
     st.session_state.date = datetime.now().date()
 
+# DYNAMIC ANIMATED LOGO HEADER
 st.markdown("""
 <div class="main-header">
-    <h1>🚀 ScopeAI Pro</h1>
-    <p>India's Coolest AI Tutor | Voice + Camera + PDF + Chat</p>
-    <div style="margin-top: 1rem;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 1.2rem; margin-bottom: 0.5rem; position: relative; z-index: 1;">
+        <svg width="70" height="70" viewBox="0 0 70 70" style="animation: rotate 6s linear infinite, glow 2s ease-in-out infinite;">
+            <defs>
+                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#f093fb;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            <circle cx="35" cy="35" r="32" fill="none" stroke="url(#logoGradient)" stroke-width="2" opacity="0.2"/>
+            <circle cx="35" cy="35" r="26" fill="none" stroke="url(#logoGradient)" stroke-width="2" stroke-dasharray="8 4" opacity="0.4"/>
+            <path d="M 35 15 L 40 28 L 54 28 L 43 37 L 48 51 L 35 42 L 22 51 L 27 37 L 16 28 L 30 28 Z" fill="url(#logoGradient)" filter="url(#glow)"/>
+            <circle cx="35" cy="35" r="8" fill="rgba(255,255,255,0.9)"/>
+        </svg>
+        <div style="text-align: left;">
+            <h1 class="logo-text">ScopeAI</h1>
+            <p class="pro-badge">PRO</p>
+        </div>
+    </div>
+    <p style="margin-top: 1rem; position: relative; z-index: 1; font-size: 1.1rem; font-weight: 500;">India's Smartest AI Tutor | Voice + Camera + PDF + Chat</p>
+    <div style="margin-top: 1rem; position: relative; z-index: 1;">
         <span class="feature-badge">🎤 Voice AI</span>
         <span class="feature-badge">📸 Snap & Solve</span>
         <span class="feature-badge">📄 PDF Master</span>
@@ -205,4 +233,4 @@ elif prompt:
     process_request("text", prompt, prompt)
 
 st.divider()
-st.markdown("<center style='color: #8696a0;'>ScopeAI Pro v8.1 Secure 🔐 | Made with ❤️ for Students | Powered by Gemini 2.5 Flash</center>", unsafe_allow_html=True)
+st.markdown("<center style='color: #8696a0;'>ScopeAI Pro v9.0 Dynamic 🔥 | Made with ❤️ for Students | Powered by Gemini 2.5 Flash</center>", unsafe_allow_html=True)
