@@ -12,14 +12,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# Gemini Setup - SABSE STABLE MODEL
+# Gemini Setup - LATEST WORKING MODEL
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     st.error("😅 GEMINI_API_KEY nahi mili. Render > Environment mein add karo")
     st.stop()
     
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-pro')  # ✅ FINAL - YE HAMESHA CHALEGA
+model = genai.GenerativeModel('gemini-1.5-flash')  # ✅ PHOTO + TEXT + PDF SAB CHALEGA
 
 # Session state
 if "messages" not in st.session_state:
@@ -151,37 +151,37 @@ with st.sidebar:
     st.info(f"💬 Total Messages: {len(st.session_state.messages)}")
     
     st.markdown("---")
-    st.caption("⚠️ Free API: 15 msg/min limit")
+    st.caption("⚠️ Free API: 15 msg/min | 5 images/min")
 
 # Display chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Suggestion Chips
+# Suggestion Chips - SAB PURANE FEATURES
 if len(st.session_state.messages) == 0:
     st.markdown("### 💡 Try asking:")
     col1, col2 = st.columns(2)
     with col1:
         if st.button("🧪 Explain Organic Chemistry", key="btn1"):
-            prompt = "Explain Organic Chemistry basics for JEE"
+            prompt = "Explain Organic Chemistry basics for JEE with examples"
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.rerun()
         if st.button("📐 Solve Maths Problem", key="btn2"):
-            prompt = "Help me solve a calculus integration problem step by step"
+            prompt = "Help me solve integration by parts step by step"
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.rerun()
     with col2:
         if st.button("⚡ Physics Doubt", key="btn3"):
-            prompt = "Explain Newton's Laws of Motion with examples"
+            prompt = "Explain Kirchhoff's Laws with numerical example"
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.rerun()
         if st.button("🧬 Biology Concept", key="btn4"):
-            prompt = "Explain Cell Division for NEET with diagrams"
+            prompt = "Explain DNA Replication for NEET with diagram"
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.rerun()
 
-# Handle File Upload - GEMINI-PRO IMAGE SUPPORT HATA DIYA
+# Handle File Upload - PHOTO + PDF DONO SOLUTION
 if uploaded_file is not None:
     file_type = uploaded_file.type
     
@@ -197,15 +197,32 @@ if uploaded_file is not None:
         message_placeholder = st.empty()
         try:
             if "image" in file_type:
-                # gemini-pro image support nahi karta, isliye text reply
-                full_response = "😅 Bhai abhi photo wala feature upgrade ho raha hai. Text mein doubt likh do, main turant solve kar dunga 🚀"
+                image = Image.open(uploaded_file)
+                prompt = """You are ScopeAI, a JEE/NEET expert tutor. 
+                1. If this is a question, solve it step by step
+                2. Show all formulas clearly
+                3. Use Hindi-English mix like a real teacher
+                4. Be encouraging with emojis
+                5. If image is blurry, ask for clearer pic
+                6. Give final answer in box"""
+                
+                response = model.generate_content([prompt, image])
+                full_response = response.text
+                
             elif "pdf" in file_type:
                 pdf_reader = PyPDF2.PdfReader(uploaded_file)
                 pdf_text = "".join([page.extract_text() for page in pdf_reader.pages[:5]])
-                prompt = f"You are ScopeAI. Summarize this PDF for JEE/NEET student in Hindi-English mix. Make key points:\n\n{pdf_text[:4000]}"
+                prompt = f"""You are ScopeAI. Summarize this PDF for JEE/NEET student:
+                1. Key concepts in points
+                2. Important formulas
+                3. Hindi-English mix
+                4. Make it exam ready
+                
+                PDF Text: {pdf_text[:4000]}"""
                 response = model.generate_content(prompt)
                 full_response = response.text
             
+            # Typing Animation
             displayed_text = ""
             for chunk in full_response.split():
                 displayed_text += chunk + " "
@@ -214,18 +231,21 @@ if uploaded_file is not None:
             message_placeholder.markdown(full_response)
             time.sleep(1)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
         except Exception as e:
             if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
-                error_msg = "😅 Bhai 1 min ruk ja! Free API ki limit 15 msg/min hai. Tu to ChatGPT se bhi tez hai 🔥"
+                error_msg = "😅 Bhai 1 min ruk ja! Free API limit: 15 text/min, 5 images/min. Tu to topper nikla 🔥"
+            elif "404" in str(e):
+                error_msg = "😅 Model error! Render pe redeploy kar ya API key check kar"
             else:
-                error_msg = f"😅 Error: {str(e)[:100]}. Dobara try kar"
+                error_msg = f"😅 Error: {str(e)[:100]}. Photo clear bhej ya text mein likh"
             message_placeholder.markdown(error_msg)
             st.session_state.messages.append({"role": "assistant", "content": error_msg})
     
     st.session_state.file_uploader = None
     st.rerun()
 
-# Chat Input
+# Chat Input - TEXT DOUBT SOLUTION
 if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -233,20 +253,23 @@ if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
     
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        system_prompt = """You are ScopeAI, a JEE/NEET expert tutor. 
+        system_prompt = """You are ScopeAI, India's best JEE/NEET AI tutor. 
         Rules:
-        1. Explain clearly with examples
-        2. For numericals, show step-by-step solution
-        3. Use Hindi-English mix like a real teacher
-        4. Be friendly and encouraging
-        5. Use emojis to make it fun
-        6. Format formulas properly"""
+        1. Explain like a real Kota teacher - step by step
+        2. For numericals: Given → Formula → Solution → Answer
+        3. Use Hindi-English mix. Example: "Beta ye concept samjho"
+        4. Be encouraging: "Shabash!", "Tu kar lega!"
+        5. Use emojis to make it fun 😎🔥
+        6. Format: Bold for formulas, bullet points for steps
+        7. If doubt is wrong, politely correct it"""
         
-        full_prompt = f"{system_prompt}\n\nStudent: {prompt}"
+        full_prompt = f"{system_prompt}\n\nStudent Doubt: {prompt}"
         
         try:
             response = model.generate_content(full_prompt)
             full_response = response.text
+            
+            # Typing Animation
             displayed_text = ""
             for chunk in full_response.split():
                 displayed_text += chunk + " "
@@ -254,11 +277,14 @@ if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
                 message_placeholder.markdown(displayed_text + "▌")
             message_placeholder.markdown(full_response)
             time.sleep(1)
+            
         except Exception as e:
             if "429" in str(e) or "quota" in str(e).lower() or "limit" in str(e).lower():
-                full_response = "😅 Bhai 1 min ruk ja! Free API ki limit 15 msg/min hai. Tu to ChatGPT se bhi tez hai 🔥"
+                full_response = "😅 Bhai 1 min break le! Free API ki limit 15 msg/min hai. Chai pi ke aa, phir padhenge 🔥"
+            elif "404" in str(e):
+                full_response = "😅 Model nahi mila! Render pe code update check kar"
             else:
-                full_response = f"😅 Thoda error aa gaya: {str(e)[:80]}. Dobara try kar"
+                full_response = f"😅 Thoda error aa gaya: {str(e)[:80]}. Dobara try kar bhai"
             message_placeholder.markdown(full_response)
     
     st.session_state.messages.append({"role": "assistant", "content": full_response})
