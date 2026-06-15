@@ -2,25 +2,24 @@ import streamlit as st
 import google.generativeai as genai
 from supabase import create_client, Client
 import os
+import re
 from datetime import datetime
-import base64
 from PIL import Image
-import io
 
 # --------------------- PAGE CONFIG ---------------------
 st.set_page_config(
-    page_title="Scope AI - Schiller GZB",
-    page_icon="🔴",
+    page_title="ScopeAI - Your AI Companion",
+    page_icon="⭐",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --------------------- CUSTOM CSS ---------------------
+# --------------------- CUSTOM CSS - COLOURFUL UI ---------------------
 st.markdown("""
 <style>
-    /* Main App Background */
+    /* Main App Background - Colorful Gradient */
     .main {
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 100%);
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
         color: white;
     }
     
@@ -29,66 +28,117 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Chat Messages */
-    .stChatMessage {
-        background: rgba(40, 40, 40, 0.8) !important;
-        border-radius: 15px !important;
-        border: 1px solid #dc2626 !important;
-        padding: 1rem !important;
-        margin: 0.5rem 0 !important;
+    /* Animated Star Logo */
+    @keyframes rotate-star {
+        0% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 10px #ffd700); }
+        50% { transform: rotate(180deg) scale(1.2); filter: drop-shadow(0 0 20px #ff6b6b); }
+        100% { transform: rotate(360deg) scale(1); filter: drop-shadow(0 0 10px #4ecdc4); }
     }
     
-    /* Buttons */
+    .star-logo {
+        font-size: 4rem;
+        text-align: center;
+        animation: rotate-star 3s ease-in-out infinite;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Chat Messages - Glassmorphism */
+    .stChatMessage {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 20px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        padding: 1.2rem !important;
+        margin: 0.8rem 0 !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37) !important;
+    }
+    
+    /* Buttons - Colorful Gradient */
     .stButton>button {
-        background: linear-gradient(45deg, #dc2626, #ef4444) !important;
+        background: linear-gradient(45deg, #f093fb 0%, #f5576c 50%, #4facfe 100%) !important;
         color: white !important;
         border: none !important;
-        border-radius: 10px !important;
+        border-radius: 15px !important;
         font-weight: bold !important;
         width: 100% !important;
+        padding: 0.6rem !important;
         transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4) !important;
     }
     
     .stButton>button:hover {
-        background: linear-gradient(45deg, #ef4444, #dc2626) !important;
-        transform: scale(1.02) !important;
-        box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4) !important;
+        transform: translateY(-3px) scale(1.03) !important;
+        box-shadow: 0 6px 25px rgba(240, 147, 251, 0.6) !important;
     }
     
-    /* Text Input */
+    /* Text Input - Neon Border */
     .stTextInput>div>div>input {
-        background: rgba(30, 30, 30, 0.9) !important;
+        background: rgba(30, 30, 50, 0.6) !important;
         color: white !important;
-        border: 1px solid #dc2626 !important;
-        border-radius: 10px !important;
+        border: 2px solid #f093fb !important;
+        border-radius: 12px !important;
+        padding: 0.7rem !important;
+    }
+    
+    .stTextInput>div>div>input:focus {
+        border: 2px solid #4facfe !important;
+        box-shadow: 0 0 15px rgba(79, 172, 254, 0.5) !important;
+    }
+    
+    /* Headers - Gradient Text */
+    h1 {
+        background: linear-gradient(45deg, #f093fb, #f5576c, #4facfe, #00f2fe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        font-size: 3rem !important;
+        font-weight: 900 !important;
+        animation: gradient-shift 3s ease infinite;
+    }
+    
+    @keyframes gradient-shift {
+        0%, 100% { filter: hue-rotate(0deg); }
+        50% { filter: hue-rotate(45deg); }
+    }
+    
+    h2, h3 {
+        color: #f093fb !important;
+        text-shadow: 0 0 10px rgba(240, 147, 251, 0.5) !important;
+    }
+    
+    /* Login Box - Colorful Glow */
+    .login-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 25px;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: glow-color 3s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow-color {
+        from { box-shadow: 0 0 20px #f093fb, 0 0 40px #f5576c; }
+        to { box-shadow: 0 0 30px #4facfe, 0 0 50px #00f2fe; }
     }
     
     /* Sidebar */
     .css-1d391kg {
-        background: linear-gradient(180deg, #1a1a1a 0%, #2d1b1b 100%) !important;
-    }
-    
-    /* Headers */
-    h1, h2, h3 {
-        color: #dc2626 !important;
-        text-shadow: 0 0 10px rgba(220, 38, 38, 0.5) !important;
-    }
-    
-    /* Login Box Glow Effect */
-    .login-container {
-        animation: glow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes glow {
-        from { box-shadow: 0 0 10px #dc2626; }
-        to { box-shadow: 0 0 20px #dc2626, 0 0 30px #ef4444; }
+        background: linear-gradient(180deg, #0f0c29 0%, #302b63 100%) !important;
     }
     
     /* Chat Input */
     .stChatInputContainer {
-        background: rgba(30, 30, 30, 0.9) !important;
-        border: 1px solid #dc2626 !important;
-        border-radius: 15px !important;
+        background: rgba(30, 30, 50, 0.8) !important;
+        border: 2px solid #f093fb !important;
+        border-radius: 20px !important;
+    }
+    
+    /* Subtitle */
+    .subtitle {
+        text-align: center;
+        color: #b8b8d1;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -112,25 +162,33 @@ if "messages" not in st.session_state:
 if "user_email" not in st.session_state:
     st.session_state.user_email = ""
 
+# --------------------- EMAIL VALIDATION ---------------------
+def is_valid_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
 # --------------------- LOGIN FUNCTION ---------------------
 def login_page():
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center;'>🔴 SCHILLER GZB</h1>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center;'>Scope AI</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>Your Gen-Z AI Companion</p>", unsafe_allow_html=True)
+        st.markdown('<div class="star-logo">⭐</div>', unsafe_allow_html=True)
+        st.markdown("<h1>ScopeAI</h1>", unsafe_allow_html=True)
+        st.markdown('<p class="subtitle">Your Colorful AI Companion for Everyone</p>', unsafe_allow_html=True)
         
-        email = st.text_input("School Email", placeholder="yourname@schillergzb.com")
-        access_code = st.text_input("Access Code", type="password", placeholder="Enter access code")
+        email = st.text_input("Your Email", placeholder="you@gmail.com")
+        access_code = st.text_input("Access Code", type="password", placeholder="Enter your access code")
         
-        if st.button("Let's Gooo 🚀"):
-            if access_code == ACCESS_CODE and email.endswith("@schillergzb.com"):
+        if st.button("Launch ScopeAI 🚀"):
+            if not is_valid_email(email):
+                st.error("Valid email daal bhai 📧")
+            elif access_code != ACCESS_CODE:
+                st.error("Galat Access Code 😤")
+            else:
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
+                st.balloons()
                 st.rerun()
-            else:
-                st.error("Galat Access Code ya Email bhai 😤")
         st.markdown('</div>', unsafe_allow_html=True)
 
 # --------------------- CHAT FUNCTION ---------------------
@@ -138,29 +196,32 @@ def chat_page():
     # Header
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        st.markdown("<h1 style='text-align: center;'>🔴 Scope AI</h1>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center;'>Welcome {st.session_state.user_email}</p>", unsafe_allow_html=True)
+        st.markdown('<div class="star-logo" style="font-size: 2.5rem;">⭐</div>', unsafe_allow_html=True)
+        st.markdown("<h1>ScopeAI</h1>", unsafe_allow_html=True)
+        st.markdown(f'<p class="subtitle">Welcome {st.session_state.user_email}</p>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        st.markdown("### ⚡ Quick Actions")
-        if st.button("📚 NCERT Notes"):
-            st.session_state.messages.append({"role": "user", "content": "Give me NCERT notes"})
-        if st.button("📝 PYQ Practice"):
-            st.session_state.messages.append({"role": "user", "content": "Give me previous year questions"})
-        if st.button("📅 Timetable"):
+        st.markdown("### ✨ Quick Actions")
+        if st.button("📚 Study Notes"):
+            st.session_state.messages.append({"role": "user", "content": "Give me study notes"})
+            st.rerun()
+        if st.button("📝 Practice Questions"):
+            st.session_state.messages.append({"role": "user", "content": "Give me practice questions"})
+            st.rerun()
+        if st.button("📅 Study Planner"):
             st.session_state.messages.append({"role": "user", "content": "Make my study timetable"})
+            st.rerun()
+        if st.button("🎯 Doubt Solver"):
+            st.session_state.messages.append({"role": "user", "content": "I have a doubt"})
+            st.rerun()
         
         st.markdown("---")
         if st.button("🚪 Logout"):
-            if st.session_state.get('confirm_logout'):
-                st.session_state.logged_in = False
-                st.session_state.messages = []
-                st.session_state.user_email = ""
-                st.rerun()
-            else:
-                st.session_state.confirm_logout = True
-                st.warning("Are you sure? Click again to logout")
+            st.session_state.logged_in = False
+            st.session_state.messages = []
+            st.session_state.user_email = ""
+            st.rerun()
     
     # Display chat messages
     for message in st.session_state.messages:
@@ -168,30 +229,28 @@ def chat_page():
             st.markdown(message["content"])
     
     # Chat input
-    if prompt := st.chat_input("Pucho kuch bhi... 💭"):
-        # Add user message
+    if prompt := st.chat_input("Ask me anything... 💭"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Get AI response
         with st.chat_message("assistant"):
-            with st.spinner("Soch raha hu... 🧠"):
+            with st.spinner("Thinking... 🌟"):
                 try:
                     response = model.generate_content(prompt)
                     st.markdown(response.text)
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
                 except Exception as e:
-                    st.error(f"Kuch gadbad ho gayi bhai: {str(e)}")
+                    st.error(f"Oops! Kuch gadbad ho gayi: {str(e)}")
     
     # Image upload
-    uploaded_file = st.file_uploader("Photo bhejo", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
+    uploaded_file = st.file_uploader("Upload Image", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
     if uploaded_file:
         image = Image.open(uploaded_file)
         st.image(image, width=300)
-        with st.spinner("Photo dekh raha hu... 👀"):
+        with st.spinner("Analyzing image... 🔍"):
             try:
-                response = model.generate_content(["Is image ke baare mein batao", image])
+                response = model.generate_content(["Describe this image in detail", image])
                 st.session_state.messages.append({"role": "user", "content": "[Image uploaded]"})
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
                 st.rerun()
