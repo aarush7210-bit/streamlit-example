@@ -1,5 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
+from PIL import Image
+import PyPDF2
+import io
 import time
 
 # Page config
@@ -84,7 +87,7 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(102, 126, 234, 0.4) !important;
     }
     
-    /* Suggestion Buttons */
+    /* Buttons */
     .stButton button {
         background: rgba(30, 30, 50, 0.6) !important;
         border: 1px solid rgba(102, 126, 234, 0.3) !important;
@@ -99,6 +102,14 @@ st.markdown("""
         background: rgba(102, 126, 234, 0.2) !important;
         border-color: #667eea !important;
         transform: translateY(-2px);
+    }
+    
+    /* File Uploader */
+    .stFileUploader {
+        background: rgba(30, 30, 50, 0.4) !important;
+        border: 1px dashed rgba(102, 126, 234, 0.4) !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
     }
     
     /* Logo Glow */
@@ -129,11 +140,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# New Chat Button in Sidebar
+# Sidebar - New Chat + File Upload
 with st.sidebar:
     if st.button("➕ New Chat", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 📎 Upload Files")
+    
+    uploaded_file = st.file_uploader(
+        "Photo ya PDF daalo",
+        type=['png', 'jpg', 'jpeg', 'pdf'],
+        label_visibility="collapsed"
+    )
 
 # Display chat history
 for message in st.session_state.messages:
@@ -163,6 +183,60 @@ if len(st.session_state.messages) == 0:
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.rerun()
 
+# Handle File Upload
+if uploaded_file is not None:
+    file_type = uploaded_file.type
+    
+    # Show uploaded file in chat
+    with st.chat_message("user"):
+        if "image" in file_type:
+            st.image(uploaded_file, width=300)
+            st.session_state.messages.append({"role": "user", "content": "📷 Image uploaded"})
+        elif "pdf" in file_type:
+            st.markdown(f"📄 **PDF Uploaded:** {uploaded_file.name}")
+            st.session_state.messages.append({"role": "user", "content": f"📄 PDF uploaded: {uploaded_file.name}"})
+    
+    # Process file with Gemini
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        
+        try:
+            if "image" in file_type:
+                image = Image.open(uploaded_file)
+                response = model.generate_content([
+                    "You are ScopeAI, a JEE/NEET expert. Solve this question step by step from the image. Use Hindi-English mix. Be encouraging.",
+                    image
+                ])
+            elif "pdf" in file_type:
+                pdf_reader = PyPDF2.PdfReader(uploaded_file)
+                pdf_text = ""
+                for page in pdf_reader.pages:
+                    pdf_text += page.extract_text()
+                
+                prompt = f"""You are ScopeAI, a JEE/NEET expert. 
+                Student uploaded this PDF content. Summarize it and explain key concepts for JEE/NEET.
+                Use Hindi-English mix. Be encouraging.
+                
+                PDF Content: {pdf_text[:3000]}"""
+                response = model.generate_content(prompt)
+            
+            full_response = response.text
+            
+            # Typing Animation
+            displayed_text = ""
+            for chunk in full_response.split():
+                displayed_text += chunk + " "
+                time.sleep(0.03)
+                message_placeholder.markdown(displayed_text + "▌")
+            
+            message_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
+        except Exception as e:
+            message_placeholder.markdown(f"😅 Bhai error aa gaya: {str(e)}")
+    
+    st.rerun()
+
 # Chat Input
 if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
     # Add user message
@@ -174,7 +248,6 @@ if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        # System prompt for JEE/NEET expert
         system_prompt = """You are ScopeAI, a JEE/NEET expert tutor. 
         Explain concepts clearly with examples. 
         For numericals, show step-by-step solution.
@@ -197,7 +270,8 @@ if prompt := st.chat_input("Ask anything... JEE/NEET/IIT/Doubts 🎯"):
             message_placeholder.markdown(full_response)
             
         except Exception as e:
-            message_placeholder.markdown("😅 Bhai thoda error aa gaya. Fir se try karo.")
+            full_response = "😅 Bhai thoda error aa gaya. Fir se try karo."
+            message_placeholder.markdown(full_response)
     
     # Save assistant message
     st.session_state.messages.append({"role": "assistant", "content": full_response})
